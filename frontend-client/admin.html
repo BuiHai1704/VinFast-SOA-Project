@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VinFast Admin - Hệ Thống Quản Trị SOA</title>
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome (Icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        
+        /* Hiệu ứng loading */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Ẩn hiện các section */
+        .section-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .section-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Menu active state */
+        .nav-item.active { background-color: #1e293b; border-left: 4px solid #3b82f6; }
+        .nav-item { border-left: 4px solid transparent; }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex overflow-hidden">
+
+    <!-- SIDEBAR (MENU TRÁI) -->
+    <aside class="w-64 bg-slate-900 text-white flex flex-col flex-shrink-0 transition-all duration-300 shadow-xl z-20">
+        <!-- Logo -->
+        <div class="h-16 flex items-center justify-center border-b border-slate-700 bg-slate-900">
+            <img src="vinfast_logo.png" alt="VinFast" class="h-8 mr-2 bg-white rounded p-1">
+            <span class="text-xl font-bold tracking-wider">ADMIN</span>
+        </div>
+
+        <!-- User Info (Mini) -->
+        <div class="p-4 border-b border-slate-700 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold">AD</div>
+            <div>
+                <p class="text-sm font-medium">Administrator</p>
+                <p class="text-xs text-slate-400">admin@vinfast.com</p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1">
+                <li>
+                    <a href="#" onclick="switchTab('dashboard', this)" class="nav-item active flex items-center px-6 py-3 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                        <i class="fas fa-chart-pie w-6 text-center"></i>
+                        <span class="ml-3 font-medium">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="switchTab('orders', this)" class="nav-item flex items-center px-6 py-3 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                        <i class="fas fa-shopping-cart w-6 text-center"></i>
+                        <span class="ml-3 font-medium">Quản lý Đơn hàng</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="switchTab('inventory', this)" class="nav-item flex items-center px-6 py-3 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                        <i class="fas fa-car w-6 text-center"></i>
+                        <span class="ml-3 font-medium">Kho xe (Catalog)</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="switchTab('customers', this)" class="nav-item flex items-center px-6 py-3 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                        <i class="fas fa-users w-6 text-center"></i>
+                        <span class="ml-3 font-medium">Quản lý Khách hàng</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Footer Sidebar -->
+        <div class="p-4 bg-slate-950 text-xs text-center text-slate-500">
+            <p>VinFast SOA Project v1.0</p>
+            <a href="index.html" class="text-blue-400 hover:underline mt-1 block">Về trang chủ</a>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT (PHẢI) -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden">
+        
+        <!-- Top Header -->
+        <header class="h-16 bg-white shadow-sm flex items-center justify-between px-6 z-10">
+            <h2 class="text-xl font-bold text-gray-700" id="page-title">Dashboard Tổng Quan</h2>
+            
+            <div class="flex items-center space-x-4">
+                <button onclick="reloadData()" class="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition text-sm font-medium">
+                    <i class="fas fa-sync-alt" id="refresh-icon"></i> Làm mới dữ liệu
+                </button>
+                <div class="h-8 w-px bg-gray-200"></div>
+                <button onclick="logout()" class="text-red-500 hover:text-red-700 text-sm font-medium">
+                    <i class="fas fa-sign-out-alt mr-1"></i> Đăng xuất
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Scroll Area -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+            
+            <!-- SECTION: DASHBOARD -->
+            <div id="dashboard" class="section-content active">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <!-- Stat Card 1 -->
+                    <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium uppercase">Tổng Doanh Thu</p>
+                                <h3 class="text-2xl font-bold text-gray-800 mt-1" id="stat-revenue">0 VND</h3>
+                            </div>
+                            <div class="p-3 bg-blue-100 rounded-full text-blue-600">
+                                <i class="fas fa-dollar-sign text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Stat Card 2 -->
+                    <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-green-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium uppercase">Tổng Đơn Hàng</p>
+                                <h3 class="text-2xl font-bold text-gray-800 mt-1" id="stat-orders">0</h3>
+                            </div>
+                            <div class="p-3 bg-green-100 rounded-full text-green-600">
+                                <i class="fas fa-shopping-bag text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Stat Card 3 -->
+                    <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-purple-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium uppercase">Mẫu Xe Đang Bán</p>
+                                <h3 class="text-2xl font-bold text-gray-800 mt-1" id="stat-cars">0</h3>
+                            </div>
+                            <div class="p-3 bg-purple-100 rounded-full text-purple-600">
+                                <i class="fas fa-car text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">Hoạt động gần đây</h3>
+                    <p class="text-gray-500 italic">Hệ thống đang theo dõi các giao dịch từ Service T3 (Orders)...</p>
+                </div>
+            </div>
+
+            <!-- SECTION: ORDERS -->
+            <div id="orders" class="section-content">
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="font-bold text-gray-700">Danh Sách Đơn Hàng</h3>
+                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Nguồn: Order Service (5003)</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3">Mã Đơn</th>
+                                    <th class="px-6 py-3">Khách Hàng (T1)</th>
+                                    <th class="px-6 py-3">Sản Phẩm (T2)</th>
+                                    <th class="px-6 py-3">Tổng Tiền</th>
+                                    <th class="px-6 py-3">Ngày Đặt</th>
+                                    <th class="px-6 py-3">Trạng Thái</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-table-body" class="divide-y divide-gray-200">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="orders-loading" class="p-4 text-center text-gray-500 hidden">
+                        <div class="loader mx-auto mb-2"></div> Đang tải dữ liệu...
+                    </div>
+                    <div id="orders-empty" class="p-4 text-center text-gray-500 hidden">
+                        Không có đơn hàng nào.
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: INVENTORY -->
+            <div id="inventory" class="section-content">
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="font-bold text-gray-700">Kho Xe & Danh Mục Sản Phẩm</h3>
+                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Nguồn: Catalog Service (5002)</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6" id="cars-grid">
+                        <!-- Car Cards will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: CUSTOMERS -->
+            <div id="customers" class="section-content">
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="font-bold text-gray-700">Danh Sách Khách Hàng</h3>
+                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Nguồn: User Service (5001)</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3">ID</th>
+                                    <th class="px-6 py-3">Họ Tên</th>
+                                    <th class="px-6 py-3">Email</th>
+                                    <th class="px-6 py-3">Vai Trò</th>
+                                    <th class="px-6 py-3 text-center">Hành Động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customers-table-body" class="divide-y divide-gray-200">
+                                <!-- Mock Data Customers -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- SCRIPT LOGIC -->
+    <script>
+        // CẤU HÌNH API GATEWAY
+        const BASE_GATEWAY_URL = "http://127.0.0.1:8000";
+
+        // --- CÁC HÀM XỬ LÝ GIAO DIỆN ---
+
+        function switchTab(tabId, element) {
+            // 1. Update Menu Active State
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+
+            // 2. Show/Hide Content Sections
+            document.querySelectorAll('.section-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+
+            // 3. Update Title
+            const titles = {
+                'dashboard': 'Dashboard Tổng Quan',
+                'orders': 'Quản lý Đơn hàng',
+                'inventory': 'Kho xe & Catalog',
+                'customers': 'Quản lý Khách hàng'
+            };
+            document.getElementById('page-title').textContent = titles[tabId];
+
+            // 4. Load Data if needed
+            if(tabId === 'orders') loadOrders();
+            if(tabId === 'inventory') loadInventory();
+            if(tabId === 'customers') loadCustomers();
+        }
+
+        function logout() {
+            if(confirm("Bạn có chắc muốn đăng xuất?")) {
+                localStorage.removeItem('jwt_token');
+                localStorage.removeItem('user_id');
+                window.location.href = 'login.html';
+            }
+        }
+
+        async function reloadData() {
+            const btn = document.querySelector('button[onclick="reloadData()"]');
+            const icon = document.getElementById('refresh-icon');
+            icon.classList.add('fa-spin');
+            btn.disabled = true;
+            
+            await Promise.all([loadOrders(), loadInventory(), loadCustomers()]);
+            
+            setTimeout(() => {
+                icon.classList.remove('fa-spin');
+                btn.disabled = false;
+            }, 500);
+        }
+
+        // --- CÁC HÀM GỌI API (SOA LOGIC) ---
+
+        async function fetchUserName(userId) {
+            try {
+                const response = await fetch(`${BASE_GATEWAY_URL}/users/users/${userId}`);
+                if (response.ok) {
+                    const user = await response.json();
+                    return { name: user.name, email: user.email };
+                }
+            } catch (e) { console.error(e); }
+            return { name: `User ID ${userId}`, email: 'N/A' };
+        }
+
+        async function fetchCarModelName(carId) {
+            try {
+                const response = await fetch(`${BASE_GATEWAY_URL}/catalog/catalog/cars/${carId}`);
+                if (response.ok) {
+                    const car = await response.json();
+                    return car.model_name;
+                }
+            } catch (e) { console.error(e); }
+            return `Car ID ${carId}`;
+        }
+
+        async function loadOrders() {
+            const tbody = document.getElementById('orders-table-body');
+            const loading = document.getElementById('orders-loading');
+            const empty = document.getElementById('orders-empty');
+            
+            tbody.innerHTML = '';
+            loading.classList.remove('hidden');
+            empty.classList.add('hidden');
+
+            try {
+                const response = await fetch(`${BASE_GATEWAY_URL}/orders/orders`);
+                if (!response.ok) throw new Error("Failed to fetch orders");
+                
+                const orders = await response.json();
+                
+                if (orders.length === 0) {
+                    empty.classList.remove('hidden');
+                } else {
+                    let totalRevenue = 0;
+                    
+                    for (const order of orders) {
+                        totalRevenue += order.total_amount;
+                        const userInfo = await fetchUserName(order.user_id);
+                        
+                        let productDetailsHTML = '';
+                        for (const item of order.items) {
+                            const carName = await fetchCarModelName(item.car_model_id);
+                            productDetailsHTML += `
+                                <div class="text-xs mb-1">
+                                    <span class="font-bold text-slate-700">${carName}</span> 
+                                    <span class="text-slate-500">x${item.quantity}</span>
+                                </div>`;
+                        }
+
+                        const statusColors = {
+                            'Pending': 'bg-yellow-100 text-yellow-800',
+                            'Confirmed': 'bg-green-100 text-green-800',
+                            'Cancelled': 'bg-red-100 text-red-800'
+                        };
+                        const statusBadge = `<span class="px-2 py-1 rounded text-xs font-bold ${statusColors[order.status] || 'bg-gray-100'}">${order.status}</span>`;
+
+                        const row = `
+                            <tr class="bg-white border-b hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium text-gray-900">#${order.order_id}</td>
+                                <td class="px-6 py-4">
+                                    <div class="font-medium">${userInfo.name}</div>
+                                    <div class="text-xs text-gray-500">${userInfo.email}</div>
+                                </td>
+                                <td class="px-6 py-4">${productDetailsHTML}</td>
+                                <td class="px-6 py-4 font-bold text-blue-600">${order.total_amount.toLocaleString('vi-VN')} đ</td>
+                                <td class="px-6 py-4 text-gray-500 text-xs">${new Date(order.order_date).toLocaleString('vi-VN')}</td>
+                                <td class="px-6 py-4">${statusBadge}</td>
+                            </tr>
+                        `;
+                        tbody.innerHTML += row;
+                    }
+
+                    // Update Dashboard Stats
+                    document.getElementById('stat-orders').innerText = orders.length;
+                    document.getElementById('stat-revenue').innerText = totalRevenue.toLocaleString('vi-VN') + ' VND';
+                }
+            } catch (error) {
+                console.error("Error loading orders:", error);
+                empty.innerText = "Lỗi kết nối tới Order Service hoặc Gateway.";
+                empty.classList.remove('hidden');
+            } finally {
+                loading.classList.add('hidden');
+            }
+        }
+
+        async function loadInventory() {
+            const grid = document.getElementById('cars-grid');
+            grid.innerHTML = '<div class="col-span-3 text-center text-gray-500">Đang tải dữ liệu từ Catalog Service...</div>';
+
+            try {
+                const response = await fetch(`${BASE_GATEWAY_URL}/catalog/catalog/cars`);
+                if (!response.ok) throw new Error("Failed to fetch cars");
+                
+                const cars = await response.json();
+                grid.innerHTML = '';
+                
+                document.getElementById('stat-cars').innerText = cars.length; // Update stat
+
+                cars.forEach(car => {
+                    const imgUrl = car.image_url || 'https://via.placeholder.com/300x200?text=No+Image';
+                    const card = `
+                        <div class="bg-white border rounded-lg shadow-sm hover:shadow-md transition overflow-hidden">
+                            <div class="h-40 bg-gray-200 relative">
+                                <img src="${imgUrl}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x200?text=Error'">
+                                <div class="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
+                                    ID: ${car.id}
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <h4 class="font-bold text-lg text-gray-800 mb-1">${car.model_name}</h4>
+                                <p class="text-blue-600 font-bold mb-2">${car.base_price.toLocaleString('vi-VN')} VND</p>
+                                <p class="text-xs text-gray-500 line-clamp-2">${car.description}</p>
+                                <div class="mt-4 flex justify-between items-center">
+                                    <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-medium">Có sẵn</span>
+                                    <button class="text-gray-400 hover:text-blue-600"><i class="fas fa-edit"></i> Sửa</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    grid.innerHTML += card;
+                });
+            } catch (error) {
+                grid.innerHTML = '<div class="col-span-3 text-center text-red-500">Lỗi tải dữ liệu xe.</div>';
+            }
+        }
+
+        async function loadCustomers() {
+            const tbody = document.getElementById('customers-table-body');
+            // MOCK DATA: Vì User Service chưa có API lấy tất cả user, ta giả lập dữ liệu hiển thị
+            // Dữ liệu này khớp với nội dung bạn cung cấp trong database user_service.db
+            const mockUsers = [
+                { id: 1, name: "Admin VinFast", email: "admin@vinfast.com", role: "admin" },
+                { id: 2, name: "Bùi Huy Hào", email: "hao@gmail.com", role: "customer" },
+                { id: 3, name: "Khách hàng Demo 1", email: "user1@test.com", role: "customer" },
+                { id: 4, name: "Khách hàng Demo 2", email: "user2@test.com", role: "customer" },
+                { id: 93, name: "Nguyễn hữu thịnh", email: "huunam051@gmail.com", role: "customer" }
+            ];
+
+            tbody.innerHTML = '';
+            mockUsers.forEach(user => {
+                const roleColor = user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700';
+                const row = `
+                    <tr class="bg-white border-b hover:bg-gray-50">
+                        <td class="px-6 py-4 font-medium text-gray-900">${user.id}</td>
+                        <td class="px-6 py-4 font-medium">${user.name}</td>
+                        <td class="px-6 py-4 text-gray-500">${user.email}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 rounded text-xs font-bold uppercase ${roleColor}">${user.role}</span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <button class="text-blue-600 hover:underline text-xs mr-2">Chi tiết</button>
+                            ${user.role !== 'admin' ? '<button class="text-red-500 hover:underline text-xs">Khóa</button>' : ''}
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        // Khởi tạo
+        document.addEventListener('DOMContentLoaded', () => {
+            // Kiểm tra đăng nhập đơn giản
+            const token = localStorage.getItem('jwt_token');
+            if(!token) {
+                // Nếu muốn bắt buộc đăng nhập thì bỏ comment dòng dưới
+                // window.location.href = 'login.html';
+            }
+            
+            // Tải dữ liệu ban đầu
+            reloadData();
+        });
+
+    </script>
+</body>
+</html>
