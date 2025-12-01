@@ -1,2 +1,6 @@
 /instance
 /venv
+*.db
+*.sqlite
+*.sqlite3
+*.sql
