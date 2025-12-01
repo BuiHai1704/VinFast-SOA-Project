@@ -1,42 +1,106 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head><title>Đăng Ký Tài Khoản</title></head>
-<body>
-    <h1>Đăng Ký Tài Khoản VinFast</h1>
-    <form id="registerForm">
-        <input type="text" id="name" required placeholder="Họ và Tên">
-        <input type="email" id="email" required placeholder="Email">
-        <input type="password" id="password" required placeholder="Mật khẩu">
-        <button type="submit">Đăng Ký</button>
-        <p id="message"></p>
-    </form>
-    <a href="login.html">Đã có tài khoản? Đăng nhập</a>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký - VinFast</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Mulish', sans-serif; } </style>
+</head>
+<body class="bg-gray-50 flex items-center justify-center h-screen">
+
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <div class="text-center mb-6">
+            <img src="vinfast_logo.png" alt="VinFast" class="h-10 mx-auto mb-4">
+            <h2 class="text-2xl font-bold text-gray-800">Tạo Tài Khoản</h2>
+        </div>
+
+        <form id="registerForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Họ và Tên</label>
+                <input type="text" id="name" placeholder="Nhập họ và tên" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" id="email" placeholder="Nhập email của bạn" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label>
+                <input type="password" id="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ít nhất 9 ký tự" required>
+                <p id="pwd-hint" class="text-xs text-gray-500 mt-1">Mật khẩu cần ít nhất 9 ký tự.</p>
+            </div>
+
+            <div id="error-box" class="hidden bg-red-50 text-red-600 text-sm p-3 rounded-lg"></div>
+            <div id="success-box" class="hidden bg-green-50 text-green-600 text-sm p-3 rounded-lg"></div>
+
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition duration-300">
+                Đăng Ký
+            </button>
+        </form>
+
+        <div class="flex items-center my-4">
+            <div class="flex-1 border-t border-gray-300"></div>
+            <span class="px-4 text-gray-500 text-sm">Hoặc</span>
+            <div class="flex-1 border-t border-gray-300"></div>
+        </div>
+
+        <button onclick="alert('Tính năng đang phát triển')" class="w-full flex items-center justify-center border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-medium py-2.5 rounded-lg transition">
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="h-5 w-5 mr-2">
+            Đăng ký với Google
+        </button>
+
+        <p class="text-center text-sm text-gray-600 mt-6">
+            Đã có tài khoản? 
+            <a href="login.html" class="text-blue-600 font-bold hover:underline">Đăng nhập</a>
+        </p>
+    </div>
 
     <script src="script.js"></script>
     <script>
-    document.getElementById('registerForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = document.getElementById('name').value;
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const msg = document.getElementById('message');
-        
-        const response = await fetch(`${BASE_GATEWAY_URL}/users/users/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, password })
-        });
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorBox = document.getElementById('error-box');
+            const successBox = document.getElementById('success-box');
 
-        if (response.ok) {
-            msg.textContent = '✅ Đăng ký thành công! Chuyển hướng đến Đăng nhập...';
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 2000);
-        } else {
-            const data = await response.json();
-            msg.textContent = `❌ Đăng ký thất bại: ${data.message || 'Lỗi không xác định'}`;
-        }
-    });
+            // Reset thông báo
+            errorBox.classList.add('hidden');
+            successBox.classList.add('hidden');
+
+            // 1. Validation: Mật khẩu < 9 ký tự
+            if (password.length < 9) {
+                errorBox.innerText = "Mật khẩu không hợp lệ (Phải từ 9 ký tự trở lên).";
+                errorBox.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BASE_GATEWAY_URL}/users/users/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                if (response.ok) {
+                    successBox.innerText = '✅ Đăng ký thành công! Đang chuyển hướng...';
+                    successBox.classList.remove('hidden');
+                    setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+                } else {
+                    const data = await response.json();
+                    errorBox.innerText = `Lỗi: ${data.message || 'Đăng ký thất bại'}`;
+                    errorBox.classList.remove('hidden');
+                }
+            } catch (error) {
+                errorBox.innerText = "Lỗi kết nối Server.";
+                errorBox.classList.remove('hidden');
+            }
+        });
     </script>
 </body>
 </html>
