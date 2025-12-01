@@ -2,7 +2,6 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chi Tiết & Đặt Hàng</title>
     <style>
         /* --- CSS BỐ CỤC CHUNG (GIỮ NGUYÊN) --- */
@@ -16,7 +15,7 @@
         .main-menu a { color: #555; text-decoration: none; margin-right: 20px; font-weight: 500; font-size: 0.95em; transition: color 0.3s; }
         .main-menu a:hover { color: #0070c0; }
         .header-actions a { color: #0070c0; text-decoration: none; margin-left: 15px; font-weight: bold; font-size: 0.9em; }
-        .btn-primary { background-color: #0070c0; color: white; padding: 8px 15px; border-radius: 4px; }
+        .btn-primary { background-color: #f8f8f8; color: white; padding: 8px 15px; border-radius: 4px; }
         .header-left, .header-right, .header-actions { display: flex; align-items: center; }
 
         /* --- CSS NỘI DUNG CHI TIẾT VÀ FORM --- */
@@ -27,19 +26,31 @@
         .order-section button { background-color: #ff0000; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; }
         .error-msg { color: red; font-weight: bold; margin-top: 10px; }
         .success-msg { color: green; font-weight: bold; margin-top: 10px; }
+
+        .car-detail-image { /* <-- STYLE CHO ẢNH CHI TIẾT */
+            max-width: 80%; /* Chiếm phần lớn container */
+            height: auto;
+            max-height: 450px;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
     <header>
         <div class="header-left">
             <a href="index.html" class="header-logo">
-                <img src="vinfast_logo.png" alt="VinFast Logo"> 
+                <img src="vinfast_logo.png" alt="VinFast Logo" height="30"> 
             </a>
             <nav class="main-menu">
                 <a href="index.html">Ô tô</a>
                 <a href="#">Dịch vụ</a>
                 <a href="#">Sự kiện</a>
-                <a href="admin.html">Dashboard Admin</a>
             </nav>
         </div>
         <div class="header-right">
@@ -74,11 +85,12 @@
 
     <script src="script.js"></script>
     <script>
-    // --- LOGIC JS ĐẶT HÀNG ---
+    // --- LOGIC JS ĐẶT HÀNG (GIỮ NGUYÊN) ---
+    // (Các hàm getAuthHeader, getUserIdFromToken, BASE_GATEWAY_URL được định nghĩa trong script.js)
+    
     const urlParams = new URLSearchParams(window.location.search);
     const carIdRaw = urlParams.get('car_id'); 
     const carId = parseInt(carIdRaw); 
-
 
     if (isNaN(carId)) {
         document.getElementById('car-details').innerHTML = '<h1>Lỗi: ID xe không hợp lệ.</h1><p>Vui lòng chọn xe từ trang danh mục.</p>';
@@ -93,7 +105,10 @@
             
             if (response.ok) {
                 const car = await response.json();
+                const imageUrl = car.image_url || 'https://via.placeholder.com/600x400?text=No+Image'; // Lấy ảnh từ T2
+                
                 document.getElementById('car-details').innerHTML = `
+                    <img src="${imageUrl}" alt="${car.model_name}" class="car-detail-image" onerror="this.onerror=null;this.src='https://via.placeholder.com/600x400?text=Image+Error';">
                     <h1>${car.model_name}</h1>
                     <p>Mô tả: ${car.description || "Không có mô tả."}</p>
                     <p>Thông số: <strong>${JSON.stringify(car.specs)}</strong></p>
@@ -107,7 +122,7 @@
         }
     }
     
-    // XỬ LÝ ĐẶT HÀNG
+    // XỬ LÝ ĐẶT HÀNG (GỌI T3)
     document.getElementById('orderForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const userId = localStorage.getItem('user_id'); 
@@ -135,7 +150,7 @@
 
         if (response.status === 201) {
             msg.className = 'success-msg';
-            msg.textContent = '✅ ĐẶT HÀNG THÀNH CÔNG! Quay lại Dashboard để xem đơn hàng.';
+            msg.textContent = '✅ ĐẶT HÀNG THÀNH CÔNG! Quay lại Danh mục để tiếp tục mua sắm.';
         } else if (response.status === 409) {
             msg.className = 'error-msg';
             msg.textContent = '⚠️ ĐẶT HÀNG THẤT BẠI: Số lượng yêu cầu vượt quá tồn kho hiện tại (Conflict).';
@@ -150,7 +165,7 @@
     // LOGIC HIỂN THỊ ĐĂNG NHẬP/ĐĂNG XUẤT CHO HEADER
     const loginLink = document.getElementById('login-link');
     const logoutLink = document.getElementById('logout-link');
-    const registerButton = document.querySelector('.header-actions .btn-primary:not(#logout-link)'); 
+    const registerButton = document.querySelector('.header-actions .btn-primary'); 
 
     const token = localStorage.getItem('jwt_token');
     if (token) {

@@ -1,4 +1,4 @@
-# database.py
+# catalog-service/database.py
 
 from flask_sqlalchemy import SQLAlchemy
 import json
@@ -9,13 +9,13 @@ class CarModel(db.Model):
     """Mô hình chi tiết các mẫu xe VinFast."""
     __tablename__ = 'car_models'
     
-    # ID là primary_key, sẽ tự động tăng
     id = db.Column(db.Integer, primary_key=True) 
     model_name = db.Column(db.String(100), unique=True, nullable=False)
     base_price = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text)
     specs = db.Column(db.Text) 
-
+    image_url = db.Column(db.String(255), nullable=True) # <-- Trường ảnh mới
+    
     inventory_items = db.relationship('Inventory', backref='car', lazy=True)
 
     def to_dict(self):
@@ -26,7 +26,8 @@ class CarModel(db.Model):
             'model_name': self.model_name,
             'base_price': self.base_price,
             'description': self.description,
-            'specs': specs_dict
+            'specs': specs_dict,
+            'image_url': self.image_url # <-- Đảm bảo trường này được trả về
         }
 
 class Inventory(db.Model):
@@ -34,7 +35,6 @@ class Inventory(db.Model):
     __tablename__ = 'inventory'
     
     id = db.Column(db.Integer, primary_key=True)
-    # Khóa ngoại
     car_model_id = db.Column(db.Integer, db.ForeignKey('car_models.id'), nullable=False) 
-    dealer_location = db.Column(db.String(100), nullable=False)
+    dealer_location = db.Column(db.String(100), default='Hà Nội')
     stock_quantity = db.Column(db.Integer, default=0)
